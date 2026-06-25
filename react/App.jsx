@@ -1,5 +1,5 @@
 /* Contact section + footer */
-
+import { Analytics } from "@vercel/analytics/react"
 function Contact(){
   return (
     <section className="contact" id="contact" data-screen-label="Contact">
