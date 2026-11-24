@@ -4,7 +4,7 @@ const locales = ['fr', 'en'];
 
 // Redirige "/" (et tout chemin sans préfixe de langue) vers /fr ou /en,
 // d'après le choix mémorisé (cookie "lang") ou la langue du navigateur.
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const hasLocale = locales.some(
