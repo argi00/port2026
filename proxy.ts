@@ -1,32 +1,46 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 
-const locales = ['fr', 'en'];
+const locales = ['fr', 'en'] as const;
 
-// Redirige "/" (et tout chemin sans préfixe de langue) vers /fr ou /en,
-// d'après le choix mémorisé (cookie "lang") ou la langue du navigateur.
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Ne pas intercepter les routes qui possèdent déjà un préfixe de langue.
   const hasLocale = locales.some(
-    (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`),
+    (locale) =>
+      pathname === `/${locale}` ||
+      pathname.startsWith(`/${locale}/`),
   );
-  if (hasLocale) return NextResponse.next();
 
+  if (hasLocale) {
+    return NextResponse.next();
+  }
+
+  // Priorité à la langue mémorisée.
   const saved = request.cookies.get('lang')?.value;
-  const accept = (request.headers.get('accept-language') ?? '').toLowerCase();
+
+  // Détection de la langue préférée du navigateur.
+  const acceptLanguage = request.headers.get('accept-language') ?? '';
+  const preferredLanguage = acceptLanguage
+    .split(',')[0]
+    ?.trim()
+    .toLowerCase();
+
   const lang =
-    saved && locales.includes(saved)
+    saved && locales.includes(saved as (typeof locales)[number])
       ? saved
-      : accept.includes('fr') || accept === ''
+      : preferredLanguage?.startsWith('fr')
         ? 'fr'
         : 'en';
 
+  // Redirection en conservant les paramètres de l'URL.
   const url = request.nextUrl.clone();
   url.pathname = `/${lang}${pathname === '/' ? '' : pathname}`;
+
   return NextResponse.redirect(url);
 }
 
 export const config = {
-  // Ignore l'API, les fichiers statiques (avec extension) et les ressources Next.
   matcher: ['/((?!api|_next|.*\\..*).*)'],
 };
